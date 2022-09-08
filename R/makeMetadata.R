@@ -277,44 +277,37 @@ MetaHubCreate <-
 #' @examples
 #'
 #' make_metadata(
-#'     directory = "~/data/scmm",
-#'     dataDirs = "mouse_gastrulation",
-#'     version = c("1.0.0", "2.0.0"),
-#'     doc_file = "inst/extdata/docuData/singlecellmultimodalv2.csv",
-#'     dry.run = FALSE
-#' )
-#'
-#' make_metadata(
-#'     directory = "~/data/scmm",
-#'     dataDirs = c(rep("mouse_gastrulation", 2),
-#'         rep("mouse_visual_cortex", 2)),
-#'     version = rep(c("1.0.0", "2.0.0"), 2),
-#'     ext_pattern = "\\.[Rr][Dd][Aa]$",
-#'     doc_file = "inst/extdata/docuData/singlecellmultimodalv3.csv",
-#'     pkg_name = "SingleCellMultiModal",
-#'     dry.run = TRUE,
-#' )
-#'
-#' make_metadata(
-#'     directory = "~/data/scmm",
-#'     dataDirs = "pbmc",
+#'     directory = character(0L),
+#'     dataDirs = character(0L),
 #'     version = "1.0.0",
-#'     ext_pattern = "\\.[Rr][Dd][AaSs]$|\\.[Mm][Tt][Xx]\\.[Gg][Zz]$",
-#'     doc_file = "inst/extdata/docuData/singlecellmultimodalv6.csv",
-#'     pkg_name = "SingleCellMultiModal",
-#'     dry.run = TRUE,
+#'     ext_pattern = character(0L),
+#'     doc_file = "inst/extdata/docuData/CyCIFData_v1.csv",
+#'     pkg_name = "CyCIFData",
+#'     dry.run = TRUE
 #' )
+#'
+#' if (interactive()) {
+#'     make_metadata(
+#'         directory = "~/data/scmm",
+#'         dataDirs = "pbmc",
+#'         version = "1.0.0",
+#'         ext_pattern = "\\.[Rr][Dd][AaSs]$|\\.[Mm][Tt][Xx]\\.[Gg][Zz]$",
+#'         doc_file = "inst/extdata/docuData/singlecellmultimodalv6.csv",
+#'         pkg_name = "SingleCellMultiModal",
+#'         dry.run = TRUE,
+#'     )
+#' }
 #'
 #' @md
 #'
 #' @export
 make_metadata <- function(
-    directory = "~/data/scmm",
-    dataDirs = c(rep("mouse_gastrulation", 2), rep("mouse_visual_cortex", 2), "pbmc"),
-    version = c(rep(c("1.0.0", "2.0.0"), 2), "1.0.0"),
-    ext_pattern = "\\.[Rr][Dd][AaSs]$|\\.[Mm][Tt][Xx]\\.[Gg][Zz]$|\\.[Hh]5$",
+    directory = character(0L),
+    dataDirs = character(0L),
+    version = "1.0.0",
+    ext_pattern = character(0L),
     doc_file,
-    pkg_name = "SingleCellMultiModal",
+    pkg_name = character(0L),
     dry.run = TRUE,
     append = FALSE
 ) {
