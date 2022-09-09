@@ -1,4 +1,4 @@
-Package: ExperimetHubMetaData
+Package: ExperimentHubMetaData
 Title: Facilities for generating a metadata table for ExperimentHub
 Version: 0.99.0
 Authors@R: 
