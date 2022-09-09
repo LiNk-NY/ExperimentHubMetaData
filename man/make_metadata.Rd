@@ -5,14 +5,16 @@
 \title{Generate the metadata.csv file from a documentation file}
 \usage{
 make_metadata(
-  directory = character(0L),
+  directory = ".",
   dataDirs = character(0L),
   version = "1.0.0",
   ext_pattern = character(0L),
   doc_file,
-  pkg_name = character(0L),
+  split_by = "SourceVersion",
+  remote = FALSE,
   dry.run = TRUE,
-  append = FALSE
+  append = FALSE,
+  ...
 )
 }
 \arguments{
@@ -32,13 +34,13 @@ above folders to find the data.}
 tells the function how to fill in the standard columns for data
 annotation, for example \code{DataProvider}, \code{TaxonomyId}, etc.}
 
-\item{pkg_name}{character(1) The name of the current package}
-
 \item{dry.run}{logical(1) Whether to (over)write the \code{metadata.csv} file or
 return as output.}
 
 \item{append}{logical(1) Whether to append to the current \code{metadata.csv}
 file}
+
+\item{pkg_name}{character(1) The name of the current package}
 }
 \value{
 Saves a file under \verb{/inst/extdata/metadata.csv}
@@ -50,13 +52,12 @@ metadata.csv file for adding to ExperimentHub.
 \examples{
 
 make_metadata(
-    directory = character(0L),
-    dataDirs = character(0L),
+    directory = "~/gh/CyCIFData",
     version = "1.0.0",
-    ext_pattern = character(0L),
+    remote = TRUE,
+    split_by = "SourceVersion",
     doc_file = "inst/extdata/docuData/CyCIFData_v1.csv",
-    pkg_name = "CyCIFData",
-    dry.run = TRUE
+    dry.run = TRUE,
 )
 
 if (interactive()) {
