@@ -135,6 +135,7 @@ any.na <- function(x) {
 ## fancyFUN <- function() {}
 ## formals(fancyFUN) <- alist()
 
+#' @importFrom BiocBaseUtils isTRUEorFALSE isScalarCharacter isCharacter
 MetaHubCreate <- function(
     base_dir, data_dirs, ext_pattern, doc_file, split_by, version, pkg_name,
     remote, ...
@@ -165,19 +166,25 @@ MetaHubCreate <- function(
     docList <- split(docFrame, docFrame[, split_by])
     versions <- version
     DataTypes <- data_dirs
+    if (!length(ext_pattern))
+        ext_pattern <- ""
 
     metaList <- Map(
         .EHubMeta,
-        DataType = DataTypes, doc_file = docList, resnames = namelist,
-        filepaths = fpathlist, replength = replengths, version = versions
+        PackageName = pkg_name,
+        DataType = DataTypes, ext_pattern = ext_pattern, doc_file = docList,
+        resnames = namelist, filepaths = fpathlist, replength = replengths,
+        version = versions
     )
 
     do.call(
         function(...) {
-            rbind.data.frame(..., make.row.names = FALSE,
-                             stringsAsFactors = FALSE)
+            rbind.data.frame(
+                ..., make.row.names = FALSE, stringsAsFactors = FALSE
+            )
         },
-        metaList)
+        metaList
+    )
 }
 
 #' Generate the metadata.csv file from a documentation file

@@ -1,6 +1,7 @@
-.EHubMeta <-
-    function(DataType, doc_file, resnames, filepaths, replength, version, ...)
-{
+.EHubMeta <- function(
+    PackageName, DataType, doc_file, ext_pattern, resnames, filepaths,
+    replength, version, ...
+) {
     message("Working on: ", basename(DataType), " v", version)
     hubmeta <- R6::R6Class("EHubMeta",
         public = list(
@@ -29,8 +30,7 @@
                     assign(i, doc_file[[i]], self)
                 })
                 if (is.na(self$Title))
-                    self$Title <- gsub(ext_pattern, "",
-                                       basename(filepaths))
+                    self$Title <- gsub(ext_pattern, "", basename(filepaths))
                 if (is.na(self$Description))
                     self$Description <- .get_Description(
                         self$Title, toupper(self$DataType)
@@ -40,7 +40,7 @@
                 if (any.na(self$SourceVersion))
                     self$SourceVersion <- "1.0.0"
                 if (any.na(self$Maintainer))
-                    self$Maintainer <- utils::maintainer(pkg_name)
+                    self$Maintainer <- utils::maintainer(PackageName)
                 if (any.na(self$RDataClass)) {
                     dataList <- .loadDataList(filepaths)
                     self$RDataClass <- .getRDataClass(dataList)
@@ -49,7 +49,7 @@
                     self$Location_Prefix <- NULL
                 if (is.na(self$RDataPath))
                     self$RDataPath <- file.path(
-                        pkg_name,
+                        PackageName,
                         self$DataType, paste0("v", version),
                         self$ResourceName
                     )
