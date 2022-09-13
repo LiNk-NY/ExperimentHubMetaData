@@ -1,8 +1,8 @@
 .EHubMeta <- function(
-    PackageName, DataType, doc_file, ext_pattern, resnames, filepaths,
-    replength, version, ...
+    PackageName, doc_file, resnames, ext_pattern, filepaths, replength,
+    version, ...
 ) {
-    message("Working on: ", basename(DataType), " v", version)
+    message("Working on:", " v", version)
     hubmeta <- R6::R6Class("EHubMeta",
         public = list(
             Title = NA_character_,
@@ -18,11 +18,10 @@
             DataProvider = character(1L),
             Maintainer = NA_character_,
             RDataClass = NA_character_,
-            DispatchClass = .getDispatchClass(resnames),
+            DispatchClass = NA_character_,
             Location_Prefix = NA_character_,
             RDataPath = NA_character_,
-            ResourceName = resnames,
-            DataType = DataType,
+            ResourceName = NA_character_,
 
             initialize = function(doc_file)
             {
@@ -30,18 +29,21 @@
                     assign(i, doc_file[[i]], self)
                 })
                 if (is.na(self$Title))
-                    self$Title <- gsub(ext_pattern, "", basename(filepaths))
+                    self$Title <-
+                        gsub(ext_pattern, "", basename(filepaths))
                 if (is.na(self$Description))
                     self$Description <- .get_Description(
-                        self$Title, toupper(self$DataType)
+                        self$Title
                     )
+                if (is.na(self$DispatchClass) && isCharacter(resnames))
+                    self$DispatchClass <- .getDispatchClass(resnames)
                 if (any.na(self$SourceType))
                     self$SourceType <- .getSourceType(filepaths)
                 if (any.na(self$SourceVersion))
                     self$SourceVersion <- "1.0.0"
                 if (any.na(self$Maintainer))
                     self$Maintainer <- utils::maintainer(PackageName)
-                if (any.na(self$RDataClass)) {
+                if (any.na(self$RDataClass) && isCharacter(filepaths)) {
                     dataList <- .loadDataList(filepaths)
                     self$RDataClass <- .getRDataClass(dataList)
                 }
@@ -50,7 +52,7 @@
                 if (is.na(self$RDataPath))
                     self$RDataPath <- file.path(
                         PackageName,
-                        self$DataType, paste0("v", version),
+                        paste0("v", version),
                         self$ResourceName
                     )
             },
@@ -59,7 +61,9 @@
                     c(".__enclos_env__", "clone", "generate",
                       "initialize")
                 initList <- mget(names(self)[lnames], envir = self)
-                initList <- Filter(function(x) !is.null(x), initList)
+                initList <- Filter(
+                    function(x) { !is.null(x) && length(x) }, initList
+                )
                 flist <- .stdLength(initList, replength)
                 do.call(data.frame, c(flist, stringsAsFactors = FALSE))
             }
@@ -68,4 +72,25 @@
     )
     nhub <- hubmeta$new(doc_file)
     nhub$generate()
+}
+
+.EHubMetaGenerate <- function(
+    PackageName, docList, ext_pattern, namelist, fpathlist,
+    replengths, versions, ...
+) {
+    metaList <- Map(
+        .EHubMeta,
+        PackageName = PackageName, doc_file = docList, resnames = namelist,
+        filepaths = fpathlist, replength = replengths, version = versions,
+        ...
+    )
+
+    do.call(
+        function(...) {
+            rbind.data.frame(
+                ..., make.row.names = FALSE, stringsAsFactors = FALSE
+            )
+        },
+        metaList
+    )
 }
