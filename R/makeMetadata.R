@@ -108,16 +108,28 @@ MetaHubCreate <- function(
 #'
 #' @examples
 #'
-#' make_metadata(
-#'     directory = "~/gh/CyCIFData",
-#'     version = "1.0.0",
-#'     remote = TRUE,
-#'     split_by = "SourceVersion",
-#'     doc_file = "inst/extdata/docuData/CyCIFData_v1.csv",
-#'     dry.run = TRUE,
-#' )
-#'
 #' if (interactive()) {
+#'     ## Example for CyCIFData
+#'     cy_meta <- make_metadata(
+#'         directory = "~/gh/CyCIFData",
+#'         version = "1.0.0",
+#'         remote = TRUE,
+#'         split_by = "SourceVersion",
+#'         doc_file = "inst/extdata/docuData/CyCIFData_v1.csv",
+#'         dry.run = TRUE,
+#'     )
+#'     ## write documentation data.frame to disk
+#'     write.csv(
+#'       cy_meta,
+#'       file = "~/gh/CyCIFData/inst/extdata/metadata.csv",
+#'       row.names = FALSE
+#'     )
+#'     ## validate metadata.csv file
+#'     ExperimentHubData::makeExperimentHubMetadata(
+#'         "~/gh/CyCIFData", "metadata.csv"
+#'     )
+#'
+#'     ## Example for SingleCellMultiModal
 #'     make_metadata(
 #'         directory = "~/data/scmm",
 #'         dataDirs = "pbmc",
@@ -176,8 +188,3 @@ make_metadata <- function(
 
     metadat
 }
-
-## Check metadata.csv file with:
-## ExperimentHubData::makeExperimentHubMetadata(
-##     file.path(Sys.getenv("HOME"), "gh/SingleCellMultiModal"), "metadata.csv"
-## )
