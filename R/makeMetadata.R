@@ -112,6 +112,7 @@ MetaHubCreate <- function(
 #'     ## Example for CyCIFData
 #'     cy_meta <- make_metadata(
 #'         directory = "~/gh/CyCIFData",
+#'         dataDirs = "~/data/CyCIFData",
 #'         version = "1.0.0",
 #'         remote = TRUE,
 #'         split_by = "SourceVersion",
