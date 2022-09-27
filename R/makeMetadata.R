@@ -35,43 +35,131 @@ doc_helper <- function(
 
 #' @importFrom BiocBaseUtils isTRUEorFALSE isScalarCharacter isCharacter
 MetaHubCreate <- function(
-    base_dir, data_dirs, ext_pattern, doc_file, split_by, version, pkg_name,
-    remote, ...
+    base_dir, data_dirs, ext_pattern, doc_file, split_by, version = "1.0.0",
+    pkg_name, ...
 ) {
     stopifnot(
-        dir.exists(base_dir), file.exists(doc_file), isTRUEorFALSE(remote),
+        dir.exists(base_dir), file.exists(doc_file),
         isScalarCharacter(base_dir), isScalarCharacter(doc_file),
         isScalarCharacter(version), isCharacter(split_by)
     )
-    if (remote) {
-        locations <- namelist <- fpathlist <- ""
-        replengths <- 1L
-    } else {
-        locations <- file.path(base_dir, data_dirs, paste0("v", version))
-        stopifnot(
-            all(dir.exists(locations)),
-            isScalarCharacter(ext_pattern)
+    locations <- file.path(base_dir, data_dirs, paste0("v", version))
+    stopifnot(
+        all(dir.exists(locations)),
+        isScalarCharacter(ext_pattern)
+    )
+    fpathlist <- lapply(locations, function(locs) {
+        list.files(
+            locs, pattern = ext_pattern, full.names = TRUE, recursive = TRUE
         )
-        fpathlist <- lapply(locations, function(locs) {
-            list.files(
-                locs, pattern = ext_pattern, full.names = TRUE, recursive = TRUE
-            )
-        })
-        replengths <- lengths(fpathlist)
-        namelist <- lapply(fpathlist, basename)
-    }
+    })
+    namelist <- lapply(fpathlist, basename)
     docFrame <- read.csv(doc_file, header = TRUE)
+    DataTypes <- data_dirs
     docList <- split(docFrame, docFrame[, split_by])
+    if ("SourceVersion" %in% split_by) {
+        names(docList) <- gsub(paste0("\\.", version), "", names(docList))
+        docList <- docList[DataTypes]
+    }
+    replengths <- vapply(docList, nrow, integer(1L))
     versions <- version
     if (!length(ext_pattern))
         ext_pattern <- ""
 
-    .EHubMetaGenerate(
-        PackageName = pkg_name,
-        ext_pattern = ext_pattern, docList = docList,
-        namelist = namelist, fpathlist = fpathlist, replengths = replengths,
-        versions = versions
+    metaList <- Map(
+        function(DataType, doc_file, resnames, filepaths, replength, version) {
+
+            message("Working on: ", basename(DataType), " v", version)
+
+            hubmeta <- R6::R6Class(
+                "EHubMeta",
+                public = list(
+                    Title = NA_character_,
+                    Description = NA_character_,
+                    BiocVersion = as.character(BiocManager::version()),
+                    Genome = NA_character_,
+                    SourceType = NA_character_,
+                    SourceUrl = character(1L),
+                    SourceVersion = version,
+                    Species = character(1L),
+                    TaxonomyId = character(1L),
+                    Coordinate_1_based = NA,
+                    DataProvider = character(1L),
+                    Maintainer = NA_character_,
+                    RDataClass = NA_character_,
+                    DispatchClass = NA_character_,
+                    Location_Prefix = NA_character_,
+                    RDataPath = NA_character_,
+                    ResourceName = NA_character_,
+                    DataType = DataType,
+
+                    initialize = function(doc_file)
+                    {
+                        lapply(names(doc_file), function(i) {
+                            assign(i, doc_file[[i]], self)
+                        })
+                        if (any.na(self$Title))
+                            self$Title <-
+                                gsub(ext_pattern, "", basename(filepaths))
+                        if (is.na(self$Description))
+                            self$Description <- paste(
+                                self$Title, "data specific to the",
+                                toupper(self$DataType), "project"
+                            )
+                        if (any.na(self$DispatchClass) && length(filepaths))
+                            self$DispatchClass <- .getDispatchClass(resnames)
+                        if (any.na(self$SourceType))
+                            self$SourceType <- .getSourceType(filepaths)
+                        if (any.na(self$Maintainer))
+                            self$Maintainer <- utils::maintainer(pkg_name)
+                        if (any.na(self$RDataClass)) {
+                            dataList <- .loadDataList(filepaths)
+                            self$RDataClass <- .getRDataClass(dataList)
+                        }
+                        if (any.na(self$ResourceName) && length(resnames))
+                            self$ResourceName <- resnames
+                        else if (!length(resnames) && length(self$RDataPath))
+                            self$ResourceName <- basename(self$RDataPath)
+                        if (any.na(self$Location_Prefix))
+                            self$Location_Prefix <- NULL
+                        if (any.na(self$RDataPath))
+                             self$RDataPath <- file.path(
+                                pkg_name, self$DataType,
+                                paste0("v", version), self$ResourceName
+                            )
+                    },
+                    generate = function() {
+                        lnames <- !names(self) %in%
+                            c(".__enclos_env__", "clone", "generate",
+                              "initialize")
+                        initList <- mget(names(self)[lnames], envir = self)
+                        initList <- Filter(function(x) !is.null(x), initList)
+                        flist <- .stdLength(initList, replength)
+                        do.call(data.frame, c(flist, stringsAsFactors = FALSE))
+                    }
+                ),
+                lock_objects = FALSE
+            )
+            nhub <- hubmeta$new(doc_file)
+            nhub$generate()
+        }, DataType = DataTypes, doc_file = docList, resnames = namelist,
+        filepaths = fpathlist, replength = replengths, version = versions
     )
+
+    do.call(
+        function(...) {
+            rbind.data.frame(..., make.row.names = FALSE,
+                             stringsAsFactors = FALSE)
+        },
+        metaList
+    )
+
+    # .EHubMetaGenerate(
+    #     PackageName = pkg_name,
+    #     ext_pattern = ext_pattern, docList = docList,
+    #     namelist = namelist, fpathlist = fpathlist, replengths = replengths,
+    #     versions = versions
+    # )
 
 }
 
@@ -111,12 +199,13 @@ MetaHubCreate <- function(
 #' if (interactive()) {
 #'     ## Example for CyCIFData
 #'     cy_meta <- make_metadata(
-#'         directory = "~/gh/CyCIFData",
-#'         dataDirs = "~/data/CyCIFData",
+#'         pkg_dir = "~/gh/CyCIFData",
+#'         data_dir = "~/data/CyCIFData",
+#'         data_sub_dirs = c("HDF5", "Zarr", "Expression"),
 #'         version = "1.0.0",
-#'         remote = TRUE,
-#'         split_by = "SourceVersion",
-#'         doc_file = "inst/extdata/docuData/CyCIFData_v1.csv",
+#'         ext_pattern = "\\.[Dd][Cc][Ff]",
+#'         split_by = c("DataType", "SourceVersion"),
+#'         doc_file = "inst/extdata/docuData/CyCIFData_v4.csv",
 #'         dry.run = TRUE,
 #'     )
 #'     ## write documentation data.frame to disk
@@ -146,20 +235,20 @@ MetaHubCreate <- function(
 #'
 #' @export
 make_metadata <- function(
-    directory = ".",
-    dataDirs = character(0L),
+    pkg_dir = ".",
+    data_dir = character(0L),
+    data_sub_dirs = character(0L),
     version = "1.0.0",
     ext_pattern = character(0L),
     doc_file,
     split_by = "SourceVersion",
-    remote = FALSE,
     dry.run = TRUE,
     append = FALSE,
     ...
 ) {
-    pkg_name <- devtools::as.package(directory)[["package"]]
-    exdata <- file.path(directory, "inst/extdata")
-    doc_file <- file.path(directory, doc_file)
+    pkg_name <- devtools::as.package(pkg_dir)[["package"]]
+    exdata <- file.path(pkg_dir, "inst/extdata")
+    doc_file <- file.path(pkg_dir, doc_file)
 
     if (!dir.exists(exdata))
         dir.create(exdata, recursive = TRUE)
@@ -170,14 +259,13 @@ make_metadata <- function(
     metapath <- file.path(exdata, "metadata.csv")
 
     metadat <- MetaHubCreate(
-        base_dir = directory,
-        data_dirs = dataDirs,
+        base_dir = data_dir,
+        data_dirs = data_sub_dirs,
         ext_pattern = ext_pattern,
         doc_file = doc_file,
         split_by = split_by,
         version = version,
         pkg_name = pkg_name,
-        remote = remote,
         ...
     )
 
