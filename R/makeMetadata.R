@@ -168,9 +168,12 @@ MetaHubCreate <- function(
 #' This function takes a specific folder structure and generates the
 #' metadata.csv file for adding to ExperimentHub.
 #'
-#' @param directory The base folder for _all_ datasets
+#' @param pkg_dir character(1) The location of the package for which metadata is
+#'   to be written
 #'
-#' @param dataDirs character() A vector of folder names contained in directory
+#' @param data_dir The base folder for _all_ datasets
+#'
+#' @param data_sub_dirs character() A vector of folder names contained in directory
 #'     that corresponds to each project. For multiple versions, repeat the
 #'     name of the folder.
 #'
@@ -183,8 +186,6 @@ MetaHubCreate <- function(
 #' @param doc_file character(1) A path to the documentation `data.frame` that
 #'     tells the function how to fill in the standard columns for data
 #'     annotation, for example `DataProvider`, `TaxonomyId`, etc.
-#'
-#' @param pkg_name character(1) The name of the current package
 #'
 #' @param dry.run logical(1) Whether to (over)write the `metadata.csv` file or
 #'     return as output.

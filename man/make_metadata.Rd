@@ -5,22 +5,25 @@
 \title{Generate the metadata.csv file from a documentation file}
 \usage{
 make_metadata(
-  directory = ".",
-  dataDirs = character(0L),
+  pkg_dir = ".",
+  data_dir = character(0L),
+  data_sub_dirs = character(0L),
   version = "1.0.0",
   ext_pattern = character(0L),
   doc_file,
   split_by = "SourceVersion",
-  remote = FALSE,
   dry.run = TRUE,
   append = FALSE,
   ...
 )
 }
 \arguments{
-\item{directory}{The base folder for \emph{all} datasets}
+\item{pkg_dir}{character(1) The location of the package for which metadata is
+to be written}
 
-\item{dataDirs}{character() A vector of folder names contained in directory
+\item{data_dir}{The base folder for \emph{all} datasets}
+
+\item{data_sub_dirs}{character() A vector of folder names contained in directory
 that corresponds to each project. For multiple versions, repeat the
 name of the folder.}
 
@@ -39,8 +42,6 @@ return as output.}
 
 \item{append}{logical(1) Whether to append to the current \code{metadata.csv}
 file}
-
-\item{pkg_name}{character(1) The name of the current package}
 }
 \value{
 Saves a file under \verb{/inst/extdata/metadata.csv}
@@ -54,11 +55,13 @@ metadata.csv file for adding to ExperimentHub.
 if (interactive()) {
     ## Example for CyCIFData
     cy_meta <- make_metadata(
-        directory = "~/gh/CyCIFData",
+        pkg_dir = "~/gh/CyCIFData",
+        data_dir = "~/data/CyCIFData",
+        data_sub_dirs = c("HDF5", "Zarr", "Expression"),
         version = "1.0.0",
-        remote = TRUE,
-        split_by = "SourceVersion",
-        doc_file = "inst/extdata/docuData/CyCIFData_v1.csv",
+        ext_pattern = "\\\\.[Dd][Cc][Ff]",
+        split_by = c("DataType", "SourceVersion"),
+        doc_file = "inst/extdata/docuData/CyCIFData_v4.csv",
         dry.run = TRUE,
     )
     ## write documentation data.frame to disk
