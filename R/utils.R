@@ -1,10 +1,13 @@
 .file_pattern_map <- data.frame(
     ext_pattern = paste0(
-        c("[Rr][Dd][Aa]", "[Rr][Dd][Ss]", "[Hh]5", "[Mm][Tt][Xx]\\.[Gg][Zz]"),
+        c(
+            "[Rr][Dd][Aa]", "[Rr][Dd][Ss]", "[Hh]5",
+            "[Mm][Tt][Xx]\\.[Gg][Zz]", "[Dd][Cc][Ff]"
+        ),
         "$"
     ),
     ## currently MTX DispatchClass recipe unavailable
-    Dispatch = c("Rda", "Rds", "H5File", "FilePath"),
+    Dispatch = c("Rda", "Rds", "H5File", "FilePath", "dcf"),
     stringsAsFactors = FALSE
 )
 
@@ -45,7 +48,8 @@
         "\\.[Rr][Dd][Aa]" = .loadRDA,
         "\\.[Rr][Dd][Ss]" = .loadRDS,
         "\\.[Hh]5" = .loadH5,
-        "\\.[Mm][Tt][Xx]\\.[Gg][Zz]" = .loadMTX.GZ
+        "\\.[Mm][Tt][Xx]\\.[Gg][Zz]" = .loadMTX.GZ,
+        "\\.[Dd][Cc][Ff]" = .loadDCF
     )
     hitMatrix <- vapply(names(recipelist),
                         function(pat) grepl(pat, filepaths),
@@ -84,6 +88,10 @@
 
 .loadMTX.GZ <- function(filepath) {
     .read_mtx(filepath)
+}
+
+.loadDCF <- function(filepath) {
+    read.dcf(filepath)
 }
 
 any.na <- function(x) {
